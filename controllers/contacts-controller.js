@@ -13,13 +13,16 @@ const getAll = async (req, res) => {
       skip,
       limit,
     }
-  ).populate("owner", "name email");
+  ).populate("owner", "email");
   res.json(data);
 };
 
 const getById = async (req, res) => {
   const { contactId } = req.params;
-  const result = await Contact.findById(contactId);
+  const result = await Contact.findById(
+    contactId,
+    "-createdAt -updatedAt"
+  ).populate("owner", "email");
   if (!result) {
     throw HttpError(404);
   }
