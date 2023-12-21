@@ -7,6 +7,7 @@ import {
   userSubscriptionScheme,
 } from "../../models/user.js";
 import usersController from "../../controllers/users-conroller.js";
+import upload from "../../middlewares/upload.js";
 
 const usersRouter = express.Router();
 
@@ -34,6 +35,13 @@ usersRouter.patch(
   isEmptyBody(),
   validateBody(userSubscriptionScheme),
   usersController.subscription
+);
+
+usersRouter.patch(
+  "/avatars",
+  authenticate,
+  upload.single("avatar"),
+  usersController.updateAvatar
 );
 
 export default usersRouter;
