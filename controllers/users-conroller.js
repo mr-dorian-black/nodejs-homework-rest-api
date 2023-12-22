@@ -87,6 +87,10 @@ const subscription = async (req, res) => {
 
 const updateAvatar = async (req, res, next) => {
   const { _id } = req.user;
+  console.log(req.file);
+  if (!req.file) {
+    throw HttpError(400, "missing file");
+  }
   const { path: tempUpload, originalname } = req.file;
   const filename = `${_id}_${originalname}`;
   const resultUpload = path.resolve("public", "avatars", filename);
