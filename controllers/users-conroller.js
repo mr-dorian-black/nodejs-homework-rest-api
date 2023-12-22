@@ -6,8 +6,8 @@ import jwt from "jsonwebtoken";
 import "dotenv/config";
 import gravatar from "gravatar";
 import path from "path";
-import fs from "fs/promises";
 import Jimp from "jimp";
+import fs from "fs/promises";
 
 const { SECRET_KEY } = process.env;
 
@@ -90,7 +90,8 @@ const updateAvatar = async (req, res, next) => {
   const { path: tempUpload, originalname } = req.file;
   const filename = `${_id}_${originalname}`;
   const resultUpload = path.resolve("public", "avatars", filename);
-  Jimp.read(tempUpload, (err, image) => {
+  await fs.rename(tempUpload, resultUpload);
+  Jimp.read(resultUpload, (err, image) => {
     if (err) throw err;
     image.resize(250, 250).write(resultUpload);
   });
