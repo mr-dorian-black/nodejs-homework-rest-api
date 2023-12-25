@@ -5,6 +5,7 @@ import {
   userLoginScheme,
   userRegisterScheme,
   userSubscriptionScheme,
+  verifyScheme,
 } from "../../models/user.js";
 import usersController from "../../controllers/users-conroller.js";
 import upload from "../../middlewares/upload.js";
@@ -42,6 +43,15 @@ usersRouter.patch(
   authenticate,
   upload.single("avatar"),
   usersController.updateAvatar
+);
+
+usersRouter.get("/verify/:verificationToken", usersController.verification);
+
+usersRouter.post(
+  "/verify",
+  isEmptyBody("missing required field email"),
+  validateBody(verifyScheme),
+  usersController.verify
 );
 
 export default usersRouter;
