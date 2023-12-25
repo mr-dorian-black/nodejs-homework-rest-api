@@ -32,7 +32,7 @@ const register = async (req, res) => {
   await sendMail({
     to: email,
     subject: "Verification",
-    html: `Verification link: ${host}/users/verify/${verificationToken}`,
+    html: `<a target="_blank" href="http://${host}/api/users/verify/${verificationToken}">Click verify email</a>`,
   });
   res.status(201).json({
     user: {
@@ -140,7 +140,7 @@ const verify = async (req, res, next) => {
   await sendMail({
     to: email,
     subject: "Verification",
-    html: `Verification link: ${host}/users/verify/${verificationToken}`,
+    html: `<a target="_blank" href="http://${host}/api/users/verify/${verificationToken}">Click verify email</a>`,
   });
   res.json({
     message: "Verification email sent",
