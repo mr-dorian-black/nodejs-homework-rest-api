@@ -28,6 +28,14 @@ const user = new Schema(
       type: String,
       required: true,
     },
+    verify: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: {
+      type: String,
+      required: [true, "Verify token is required"],
+    },
   },
   { versionKey: false, timestamps: true }
 );
@@ -58,6 +66,13 @@ export const userSubscriptionScheme = Joi.object({
   subscription: Joi.string()
     .required()
     .valid(...subscriptionList),
+});
+
+export const verifyScheme = Joi.object({
+  email: Joi.string()
+    .required()
+    .email()
+    .messages({ "string.required": "missing required email field" }),
 });
 
 export const User = model("user", user);

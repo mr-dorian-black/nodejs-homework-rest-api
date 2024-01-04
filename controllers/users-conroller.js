@@ -1,4 +1,4 @@
-import { HttpError } from "../helpers/index.js";
+import { HttpError, sendMail } from "../helpers/index.js";
 import { ctrlWrapper } from "../decorators/index.js";
 import { User } from "../models/user.js";
 import bcrypt from "bcrypt";
@@ -8,10 +8,12 @@ import gravatar from "gravatar";
 import path from "path";
 import Jimp from "jimp";
 import fs from "fs/promises";
+import { nanoid } from "nanoid";
 
 const { SECRET_KEY } = process.env;
 
 const register = async (req, res) => {
+  const { host } = req.headers;
   const { email, password } = req.body;
   const user = await User.findOne({ email });
   if (user) {
@@ -19,10 +21,18 @@ const register = async (req, res) => {
   }
   const hashPassword = await bcrypt.hash(password, 10);
   const avatarURL = gravatar.url(email);
+  const verificationToken = nanoid();
   const newUser = await User.create({
     ...req.body,
     password: hashPassword,
     avatarURL,
+    verificationToken,
+  });
+
+  await sendMail({
+    to: email,
+    subject: "Verification",
+    html: `<a target="_blank" href="http://${host}/api/users/verify/${verificationToken}">Click verify email</a>`,
   });
   res.status(201).json({
     user: {
@@ -34,7 +44,7 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email, verify: true });
   if (!user) {
     throw HttpError(401, "Email or password is wrong");
   }
@@ -104,6 +114,39 @@ const updateAvatar = async (req, res, next) => {
   res.json({ avatarURL });
 };
 
+const verification = async (req, res, next) => {
+  const { verificationToken } = req.params;
+  const user = await User.findOneAndUpdate(
+    { verificationToken },
+    { verificationToken: null, verify: true }
+  );
+  if (!user) {
+    throw HttpError(404, "User not found");
+  }
+  res.json({ message: "Verification successful" });
+};
+
+const verify = async (req, res, next) => {
+  const { host } = req.headers;
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw HttpError(404, "User not found");
+  }
+  const { verify, verificationToken } = user;
+  if (verify) {
+    throw HttpError(400, "Verification has already been passed");
+  }
+  await sendMail({
+    to: email,
+    subject: "Verification",
+    html: `<a target="_blank" href="http://${host}/api/users/verify/${verificationToken}">Click verify email</a>`,
+  });
+  res.json({
+    message: "Verification email sent",
+  });
+};
+
 export default {
   register: ctrlWrapper(register),
   login: ctrlWrapper(login),
@@ -111,4 +154,6 @@ export default {
   logout: ctrlWrapper(logout),
   subscription: ctrlWrapper(subscription),
   updateAvatar: ctrlWrapper(updateAvatar),
+  verification: ctrlWrapper(verification),
+  verify: ctrlWrapper(verify),
 };
